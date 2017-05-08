@@ -12,7 +12,7 @@ To compile the source code, you are required to first checkout a copy of the ori
 repository that contains our C-based patching framework for Wi-Fi firmwares. That you checkout
 this repository as one of the sub-projects in the corresponding patches sub-directory. This 
 allows you to build and compile all the firmware patches required to repeat our experiments.
-The following steps will get you started:
+The following steps will get you started on Xubuntu 16.04 LTS:
 
 1. Install some dependencies: `sudo apt-get install git gawk qpdf adb`
 2. **Only necessary for x86_64 systems**, install i386 libs: 
