@@ -6,6 +6,8 @@ LOCAL_SRCS=$(wildcard src/*.c) src/ucode_compressed.c src/templateram.c
 COMMON_SRCS=$(wildcard $(NEXMON_ROOT)/patches/common/*.c)
 FW_SRCS=$(wildcard $(FW_PATH)/*.c)
 
+UCODEFILE=ucode.asm
+
 OBJS=$(addprefix obj/,$(notdir $(LOCAL_SRCS:.c=.o)) $(notdir $(COMMON_SRCS:.c=.o)) $(notdir $(FW_SRCS:.c=.o)))
 
 CFLAGS= \
@@ -22,10 +24,15 @@ CFLAGS= \
 	-DGIT_VERSION=\"$(GIT_VERSION)\" \
 	-DBUILD_NUMBER=\"$$(cat BUILD_NUMBER)\" \
 	-Wall -Werror -O2 -nostdlib -nostartfiles -ffreestanding -mthumb -march=$(NEXMON_ARCH) \
+	-Wno-unused-function \
 	-ffunction-sections -fdata-sections \
 	-I$(NEXMON_ROOT)/patches/include \
 	-Iinclude \
 	-I$(FW_PATH)
+
+ifdef EXPERIMENT
+	CFLAGS += -DEXPERIMENT=$(EXPERIMENT)
+endif
 
 all: fw_bcmdhd.bin
 
@@ -113,8 +120,8 @@ fw_bcmdhd.bin: init gen/patch.elf $(FW_PATH)/$(RAM_FILE) gen/nexmon.mk gen/flash
 # ucode compression related
 ###################################################################
 
-ifneq ($(wildcard src/ucode.asm), )
-gen/ucode.bin: src/ucode.asm
+ifneq ($(wildcard src/$(UCODEFILE)), )
+gen/ucode.bin: src/$(UCODEFILE)
 	@printf "\033[0;31m  ASSEMBLING UCODE\033[0m %s => %s\n" $< $@
 
 ifneq ($(wildcard $(NEXMON_ROOT)/buildtools/b43/assembler/b43-asm.bin), )
