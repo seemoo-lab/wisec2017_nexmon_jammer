@@ -13,13 +13,13 @@ other publication which includes a bibliography must include
 citations to the nexmon project (1) and the paper cited under (2):
 
 1. "Matthias Schulz, Daniel Wegemer and Matthias Hollick. Nexmon:
-    The C-based Firmware Patching Framework. https://nexmon.org
+    The C-based Firmware Patching Framework. https://nexmon.org"
 
 2. "Matthias Schulz, Francesco Gringoli, Daniel Steinmetzer, Michael
     Koch and Matthias Hollick. Massive Reactive Smartphone-Based
     Jamming using Arbitrary Waveforms and Adaptive Power Control.
     Proceedings of the 10th ACM Conference on Security and Privacy
-    in Wireless and Mobile Networks (WiSec 2017), July 2017.
+    in Wireless and Mobile Networks (WiSec 2017), July 2017."
 
 # Getting Started
 
