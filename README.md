@@ -1,3 +1,5 @@
+![NexMon logo](https://github.com/seemoo-lab/nexmon/raw/master/gfx/nexmon.png)
+
 # WiSec 2017 Nexmon Jammer
 
 On the 10th ACM Conference on Security and Privacy in Wireless and Mobile Networks (WiSec 2017) 
@@ -48,3 +50,17 @@ The following steps will get you started on Xubuntu 16.04 LTS:
 11. Run `make install` to install all the built utilities on your phone.
 12. Navigate to patches/bcm4339/6_37_34_43/ and clone this repository: `git clone https://github.com/seemoo-lab/wisec2017_nexmon_jammer.git`
 13. Enter the created subdirectory wisec2017_nexmon_jammer and run `make install-firmware` to compile our firmware patch and install it on the attached Nexus 5 smartphone.
+
+# Contact
+
+* [Matthias Schulz](https://seemoo.tu-darmstadt.de/mschulz) <mschulz@seemoo.tu-darmstadt.de>
+* [Francesco Gringoli](http://netweb.ing.unibs.it/~gringoli/) <francesco.gringoli@unibs.it>
+
+# Powered By
+
+## Secure Mobile Networking Lab (SEEMOO)
+<a href="https://www.seemoo.tu-darmstadt.de">![SEEMOO logo](https://github.com/seemoo-lab/nexmon/raw/master/gfx/seemoo.png)</a>
+## Networked Infrastructureless Cooperation for Emergency Response (NICER)
+<a href="https://www.nicer.tu-darmstadt.de">![NICER logo](https://github.com/seemoo-lab/nexmon/raw/master/gfx/nicer.png)</a>
+## Multi-Mechanisms Adaptation for the Future Internet (MAKI)
+<a href="http://www.maki.tu-darmstadt.de/">![MAKI logo](https://github.com/seemoo-lab/nexmon/raw/master/gfx/maki.png)</a>
