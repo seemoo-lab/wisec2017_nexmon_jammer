@@ -1,0 +1,8 @@
+src/templateram.c
+src/ucode_compressed.c
+tmp
+obj
+log
+gen
+BUILD_NUMBER
+fw_bcmdhd.bin

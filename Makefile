@@ -6,6 +6,64 @@ LOCAL_SRCS=$(wildcard src/*.c) src/ucode_compressed.c src/templateram.c
 COMMON_SRCS=$(wildcard $(NEXMON_ROOT)/patches/common/*.c)
 FW_SRCS=$(wildcard $(FW_PATH)/*.c)
 
+# Standard node is the jammer, which is also connected to the power monitor
+NODE=J
+
+ifdef UCODEFILE
+ifeq ($(wildcard src/$(UCODEFILE)), )
+$(error selected src/$(UCODEFILE) does not exist)
+endif
+endif
+
+ifeq ($(NODE),S)
+# receiver
+ADBSERIAL := 
+#ADBSERIAL := -s 0000000000000000
+ifeq ($(ADBSERIAL),)
+$(warning Please set the device id of the smartphone used as receiver S in the Makefile.)
+endif
+endif
+
+ifeq ($(NODE),W)
+# transmitter standing next to wall
+ADBSERIAL := 
+#ADBSERIAL := -s 0000000000000000
+ifeq ($(ADBSERIAL),)
+$(warning Please set the device id of the smartphone used as transmitter T in the Makefile.)
+endif
+endif
+
+ifeq ($(NODE),R)
+# transmitter standing away from wall
+ADBSERIAL := 
+#ADBSERIAL := -s 0000000000000000
+ifeq ($(ADBSERIAL),)
+$(warning Please set the device id of the smartphone used as transmitter R in the Makefile.)
+endif
+endif
+
+ifeq ($(NODE),J)
+# jammer
+ADBSERIAL := 
+#ADBSERIAL := -s 0000000000000000
+ifeq ($(ADBSERIAL),)
+$(warning Please set the device id of the smartphone used as jammer in the Makefile.)
+endif
+endif
+
+RATESPEC := 0
+EXPNAME := undefined
+CHANSPEC := 0x1007
+SRL := 7
+LRL := 6
+AMPDU_TX := 1
+
+# The following is used to connect to an adb server running on another node, where the phones are conncted
+#ADBFLAGS := -H 192.168.2.231 $(ADBSERIAL)
+
+# The following is used if the nodes are directly connected to this computer
+ADBFLAGS := $(ADBSERIAL)
+
 UCODEFILE=ucode.asm
 
 OBJS=$(addprefix obj/,$(notdir $(LOCAL_SRCS:.c=.o)) $(notdir $(COMMON_SRCS:.c=.o)) $(notdir $(FW_SRCS:.c=.o)))
@@ -159,23 +217,35 @@ endif
 
 install-firmware: fw_bcmdhd.bin
 	@printf "\033[0;31m  REMOUNTING /system\033[0m\n"
-	$(Q)adb shell 'su -c "mount -o rw,remount /system"'
+	$(Q)adb $(ADBFLAGS) shell 'su -c "mount -o rw,remount /system"'
 	@printf "\033[0;31m  COPYING TO PHONE\033[0m %s => /sdcard/%s\n" $< $<
-	$(Q)adb push $< /sdcard/ >> log/adb.log 2>> log/adb.log
+	$(Q)adb $(ADBFLAGS) push $< /sdcard/ >> log/adb.log 2>> log/adb.log
 	@printf "\033[0;31m  COPYING\033[0m /sdcard/fw_bcmdhd.bin => /vendor/firmware/fw_bcmdhd.bin\n"
-	$(Q)adb shell 'su -c "cp /sdcard/fw_bcmdhd.bin /vendor/firmware/fw_bcmdhd.bin"'
+	$(Q)adb $(ADBFLAGS) shell 'su -c "rm /vendor/firmware/fw_bcmdhd.bin && cp /sdcard/fw_bcmdhd.bin /vendor/firmware/fw_bcmdhd.bin"'
 	@printf "\033[0;31m  RELOADING FIRMWARE\033[0m\n"
-	$(Q)adb shell 'su -c "ifconfig wlan0 down && ifconfig wlan0 up"'
+	$(Q)adb $(ADBFLAGS) shell 'su -c "ifconfig wlan0 down && ifconfig wlan0 up"'
 
 backup-firmware: FORCE
-	adb shell 'su -c "cp /vendor/firmware/fw_bcmdhd.bin /sdcard/fw_bcmdhd.orig.bin"'
-	adb pull /sdcard/fw_bcmdhd.orig.bin
+	adb $(ADBFLAGS) shell 'su -c "cp /vendor/firmware/fw_bcmdhd.bin /sdcard/fw_bcmdhd.orig.bin"'
+	adb $(ADBFLAGS) pull /sdcard/fw_bcmdhd.orig.bin
 
 install-backup: fw_bcmdhd.orig.bin
-	adb shell 'su -c "mount -o rw,remount /system"' && \
-	adb push $< /sdcard/ && \
-	adb shell 'su -c "cp /sdcard/fw_bcmdhd.bin /vendor/firmware/fw_bcmdhd.bin"'
-	adb shell 'su -c "ifconfig wlan0 down && ifconfig wlan0 up"'
+	adb $(ADBFLAGS) shell 'su -c "mount -o rw,remount /system"' && \
+	adb $(ADBFLAGS) push $< /sdcard/ && \
+	adb $(ADBFLAGS) shell 'su -c "cp /sdcard/fw_bcmdhd.bin /vendor/firmware/fw_bcmdhd.bin"'
+	adb $(ADBFLAGS) shell 'su -c "ifconfig wlan0 down && ifconfig wlan0 up"'
+
+install-original: $(FW_PATH)/$(RAM_FILE)
+	adb $(ADBFLAGS) shell 'su -c "mount -o rw,remount /system"' && \
+	adb $(ADBFLAGS) push $< /sdcard/ && \
+	adb $(ADBFLAGS) shell 'su -c "cp /sdcard/fw_bcmdhd.bin /vendor/firmware/fw_bcmdhd.bin"'
+	adb $(ADBFLAGS) shell 'su -c "ifconfig wlan0 down && ifconfig wlan0 up"'
+
+install-symlink: FORCE
+	@printf "\033[0;31m  REMOUNTING /system\033[0m\n"
+	$(Q)adb $(ADBFLAGS) shell 'su -c "mount -o rw,remount /system"'
+	adb $(ADBFLAGS) shell 'su -c "rm /vendor/firmware/fw_bcmdhd.bin && ln -s /nexmon/fw_bcmdhd.bin /vendor/firmware/fw_bcmdhd.bin"'
+	adb $(ADBFLAGS) shell 'su -c "ifconfig wlan0 down && ifconfig wlan0 up"'
 
 clean-firmware: FORCE
 	@printf "\033[0;31m  CLEANING\033[0m\n"
@@ -183,5 +253,30 @@ clean-firmware: FORCE
 
 clean: clean-firmware
 	$(Q)rm -f BUILD_NUMBER
+
+# ADB commands
+cd: FORCE
+# dump console
+	adb $(ADBFLAGS) shell su -c "dhdutil consoledump"
+
+clr: FORCE
+# clear console
+	adb $(ADBFLAGS) shell su -c "nexutil -s417"
+
+busybox: FORCE
+	adb $(ADBFLAGS) install apk/stericson.busybox.apk
+
+devices: FORCE
+	adb $(ADBFLAGS) devices
+
+sh: FORCE
+	adb $(ADBFLAGS) shell $(ADBSHELLCMD)
+
+pull: FORCE
+	adb $(ADBFLAGS) pull $(ADBPULLSRC) $(ADBPULLDST)
+
+reboot: FORCE
+	@printf "\033[0;31m  REBOOTING\033[0m node = %s\n" $(NODE)
+	$(Q)adb $(ADBFLAGS) reboot
 
 FORCE:
