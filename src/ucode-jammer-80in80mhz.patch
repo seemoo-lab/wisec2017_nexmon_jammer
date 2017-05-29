@@ -1,0 +1,124 @@
+--- ../gen/ucode.asm	2017-05-30 00:12:22.184098274 +0200
++++ ucode-jammer-80in80mhz.asm	2017-05-30 00:15:59.268216908 +0200
+@@ -3,0 +4,16 @@
++#include "../include/macros.inc"
++#define SPARE1 r54
++#define SPARE2 r55
++#define SPARE3 r56
++#define SPINNING r60
++#define TONE_REPETITION 10
++#define QOSDATA [SHM(0x1340)]
++#define BEACON [SHM(0x1342)]
++#define OTHER [SHM(0x1344)]
++#define PACK3838 [SHM(0x1350)]
++#define PACK3939 [SHM(0x1352)]
++#define PACKLATE [SHM(0x1354)]
++#define DELTACLOCK1 [SHM(0x1360)]
++#define DELTACLOCK2 [SHM(0x1362)]
++#define DELTACLOCK3 [SHM(0x1364)]
++#define CLOCKREAD [SHM(0x1380)]
+@@ -31,0 +48,10 @@
++ je SPINNING, 0, keep_spinning
++ mov 0x403, r33
++ calls L52
++ jnzxh SPR_Ext_IHR_Data & 0x1, keep_spinning
++ mov 0x400, r33
++ mov SPARE3, r34
++ calls L54
++ mov 0, SPINNING
++ sub SPR_TSF_WORD0, CLOCKREAD, DELTACLOCK2
++keep_spinning:
+@@ -2708,0 +2735 @@
++ mov SPR_TSF_WORD0, CLOCKREAD
+@@ -2853,0 +2881,52 @@
++#define SPIN_LENGTH (6 + 26 + 8 + 20 + 8)
++#define MIN_LENGTH 10
++spin_rx_header:
++ jext COND_RX_COMPLETE, spin_rx_end
++ jl SPR_RXE_FRAMELEN, SPIN_LENGTH, spin_rx_header
++spin_rx_end:
++ jl SPR_RXE_FRAMELEN, MIN_LENGTH, skip+
++ mov 0x454e, SPARE1
++ jne [5,off1], SPARE1, L652
++ mov 0x4d58, SPARE1
++ jne [6,off1], SPARE1, L652
++ mov 0x4e4f, SPARE1
++ jne [7,off1], SPARE1, L652
++ mov 0x414a, SPARE1
++ jne [8,off1], SPARE1, L652
++ mov 0x4d4d, SPARE1
++ jne [9,off1], SPARE1, L652
++ mov 0x5245, SPARE1
++ jne [10,off1], SPARE1, L652
++#define TYPE_QOS_DATA 0x88
++#define TYPE_BEACON 0x80
++ jl SPR_RXE_FRAMELEN, SPIN_LENGTH, skip+
++ and [3,off1], 0xff, SPARE1
++ jne SPARE1, TYPE_QOS_DATA, not_qos_data
++ add QOSDATA, 1, QOSDATA
++ and [20,off1], 0xff, SPARE1
++ jne SPARE1, 0x45, skip+
++ sr [24,off1], 8, SPARE1
++ jne SPARE1, 0x11, skip+
++ mov 0xFE0E, SPARE1
++ jne [31,off1], SPARE1, nextport+
++ add PACK3838, 1, PACK3838
++ jext COND_RX_COMPLETE, too_late
++ jmp skip+
++nextport:
++ mov 0x630F, SPARE1
++ jne [31,off1], SPARE1, skip+
++ add PACK3939, 1, PACK3939
++ jext COND_RX_COMPLETE, too_late
++ calls prepare_hell
++ jmp skip+
++too_late:
++ add PACKLATE, 1, PACKLATE
++ jmp skip+
++not_qos_data:
++ jne SPARE1, TYPE_BEACON, not_beacon
++ add BEACON, 1, BEACON
++ jmp found+
++not_beacon:
++ add OTHER, 1, OTHER
++found:
++skip:
+@@ -6933,0 +7013,38 @@
++ rets
++prepare_hell:
++ sub SPR_TSF_WORD0, CLOCKREAD, DELTACLOCK1
++ mov 0x471, r33
++ calls L52
++ mov 0xFFFE, SPARE1
++ and SPR_Ext_IHR_Data, SPARE1, r34
++ calls L54
++ mov 0x463, r33
++ mov 511, r34
++ calls L54
++ mov 0x461, r33
++ mov TONE_REPETITION, r34
++ calls L54
++ mov 0x462, r33
++ mov 0x3c, r34
++ calls L54
++ mov 0x400, r33
++ calls L52
++ mov SPR_Ext_IHR_Data, SPARE3
++ or SPARE3, 1, r34
++ calls L54
++ mov 0x460, r33
++ calls L52
++ mov 0xfffa, SPARE1
++ and SPR_Ext_IHR_Data, SPARE1, r34
++ calls L54
++ mov 0x3fff, SPARE1
++ mov 0x382, r33
++ calls L52
++ and SPR_Ext_IHR_Data, SPARE1, r34
++ calls L54
++ mov 0x460, r33
++ calls L52
++ or SPR_Ext_IHR_Data, 1, r34
++ calls L54
++ mov 1, SPINNING
++exit_hell:

@@ -11,7 +11,9 @@ NODE=J
 
 ifdef UCODEFILE
 ifeq ($(wildcard src/$(UCODEFILE)), )
+ifeq ($(wildcard src/$(UCODEFILE:.asm=.patch)), )
 $(error selected src/$(UCODEFILE) does not exist)
+endif
 endif
 endif
 
@@ -67,6 +69,8 @@ ADBFLAGS := $(ADBSERIAL)
 UCODEFILE=ucode.asm
 
 OBJS=$(addprefix obj/,$(notdir $(LOCAL_SRCS:.c=.o)) $(notdir $(COMMON_SRCS:.c=.o)) $(notdir $(FW_SRCS:.c=.o)))
+UCODEPATCHES:=$(notdir $(wildcard src/ucode*.patch))
+UCODEPATCHESASMS:=$(UCODEPATCHES:.patch=.asm)
 
 CFLAGS= \
 	-fplugin=$(CCPLUGIN) \
@@ -178,7 +182,23 @@ fw_bcmdhd.bin: init gen/patch.elf $(FW_PATH)/$(RAM_FILE) gen/nexmon.mk gen/flash
 # ucode compression related
 ###################################################################
 
-ifneq ($(wildcard src/$(UCODEFILE)), )
+gen/ucode.asm: $(FW_PATH)/ucode.bin
+	@printf "\033[0;31m  DISASSEMBLING UCODE\033[0m %s => %s\n" $< $@
+	$(Q)$(NEXMON_ROOT)/buildtools/b43/disassembler/b43-dasm $< $@ --arch 15 --format raw-le32
+	$(Q)$(NEXMON_ROOT)/buildtools/b43/debug/b43-beautifier --asmfile $@ --defs $(NEXMON_ROOT)/buildtools/b43/debug/include > tmp && mv tmp $@
+	$(Q)cat $@ | gcc -fpreprocessed -dD -E - > tmp && mv tmp $@
+	$(Q)sed -i '/^$$/d' $@
+	$(Q)sed -i '/"<stdin>"/d' $@
+	$(Q)sed -i -r 's|(mov )(0x48)(, SPR_TME_VAL12)|\1MAC_SUBTYPE_DATA_NULL\3|' gen/ucode.asm
+	$(Q)sed -i -r 's|(mov )(0xC4)(, SPR_TME_VAL12)|\1MAC_SUBTYPE_CONTROL_CTS\3|' gen/ucode.asm
+	$(Q)sed -i -r 's|(mov )(0xD4)(, SPR_TME_VAL12)|\1MAC_SUBTYPE_CONTROL_ACK\3|' gen/ucode.asm
+
+src/%.asm: src/%.patch gen/ucode.asm
+	@printf "\033[0;31m  PATCHING UCODE\033[0m %s => %s\n" $< $@
+	$(Q)cp gen/ucode.asm $@
+	$(Q)patch -p1 $@ $< >log/patch.log || true
+
+ifneq ($(wildcard src/$(UCODEFILE) src/$(UCODEFILE:.asm=.patch)), )
 gen/ucode.bin: src/$(UCODEFILE)
 	@printf "\033[0;31m  ASSEMBLING UCODE\033[0m %s => %s\n" $< $@
 
@@ -249,7 +269,7 @@ install-symlink: FORCE
 
 clean-firmware: FORCE
 	@printf "\033[0;31m  CLEANING\033[0m\n"
-	$(Q)rm -fr fw_bcmdhd.bin obj gen log src/ucode_compressed.c src/templateram.c
+	$(Q)rm -fr fw_bcmdhd.bin obj gen log src/ucode_compressed.c src/templateram.c $(addprefix src/,$(UCODEPATCHESASMS))
 
 clean: clean-firmware
 	$(Q)rm -f BUILD_NUMBER

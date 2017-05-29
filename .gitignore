@@ -1,5 +1,6 @@
 src/templateram.c
 src/ucode_compressed.c
+src/*.asm
 tmp
 obj
 log
