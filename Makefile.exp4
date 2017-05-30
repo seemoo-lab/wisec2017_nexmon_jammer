@@ -1,0 +1,261 @@
+EXPDIR := experiments_wisec2017
+CHANSPEC := 0xd074
+
+experiment4: \
+	init \
+	experiment4.000 \
+	experiment4.001 \
+	experiment4.002 \
+	experiment4.003 \
+	experiment4.004 \
+	experiment4.005 \
+	experiment4.006 \
+	experiment4.007 \
+	experiment4.008
+
+init: FORCE
+	mkdir -p $(EXPDIR)
+
+reboot: FORCE
+	make reboot NODE=S
+	make reboot NODE=W
+	make reboot NODE=R
+	make reboot NODE=J
+
+experiment4.000:
+	make clean
+	make install-firmware NODE=S
+	make install-firmware NODE=W
+	make install-firmware NODE=R
+	make clean
+	make install-firmware NODE=J UCODEFILE=ucode-jammer.asm
+	rm -rf $(EXPDIR)/$@
+	mkdir -p $(EXPDIR)/$@
+	mkdir -p $(EXPDIR)/$@/S
+	printf "\033[0;34m  START OF EXPERIMENT\033[0m exp: %s, timestamp: %s\n\n" $@ `date +%Y-%m-%d-%H:%M:%S` | tee $(EXPDIR)/$@/make.log
+	sleep 10
+	make sh NODE=S ADBSHELLCMD='su -c "nexutil -s610 -i -v$(CHANSPEC)"' | tee -a $(EXPDIR)/$@/make.log
+	make sh NODE=S ADBSHELLCMD='su -c "export LD_PRELOAD=libfakeioctl.so && nohup tcpdump -i wlan0 -w /sdcard/capture.pcap > /sdcard/tcpdump.log 2>/sdcard/tcpdump.err &"' | tee -a $(EXPDIR)/$@/make.log
+	make sh NODE=W ADBSHELLCMD='su -c "nexutil -s621 -i -v$(CHANSPEC)"' | tee -a $(EXPDIR)/$@/make.log
+	printf "\n\033[0;31m  START WAITING\033[0m for 1350 seconds, timestamp: %s\n" `date +%Y-%m-%d-%H:%M:%S` | tee -a $(EXPDIR)/$@/make.log
+	sleep 1350 ##### WARNING
+	printf "\n\033[0;31m  END WAITING\033[0m timestamp: %s\n" `date +%Y-%m-%d-%H:%M:%S` | tee -a $(EXPDIR)/$@/make.log
+	make sh NODE=S ADBSHELLCMD='su -c "killall tcpdump | true"' | tee -a $(EXPDIR)/$@/make.log
+	make pull NODE=S ADBPULLSRC=/sdcard/capture.pcap ADBPULLDST=$(EXPDIR)/$@/S/capture.pcap | tee -a $(EXPDIR)/$@/make.log
+	make pull NODE=S ADBPULLSRC=/sdcard/tcpdump.log ADBPULLDST=$(EXPDIR)/$@/S/tcpdump.log | tee -a $(EXPDIR)/$@/make.log
+	make pull NODE=S ADBPULLSRC=/sdcard/tcpdump.err ADBPULLDST=$(EXPDIR)/$@/S/tcpdump.err | tee -a $(EXPDIR)/$@/make.log
+	printf "\n\033[0;34m  END OF EXPERIMENT\033[0m exp: %s, timestamp: %s\n" $@ `date +%Y-%m-%d-%H:%M:%S` | tee -a $(EXPDIR)/$@/make.log
+#	git add $(EXPDIR)/$@
+#	git commit -m "EXPERIMENT: added results for $@."
+
+experiment4.001:
+	make clean
+	make install-firmware NODE=S
+	make install-firmware NODE=W
+	make install-firmware NODE=R
+	make clean
+	make install-firmware NODE=J UCODEFILE=ucode-jammer.asm
+	rm -rf $(EXPDIR)/$@
+	mkdir -p $(EXPDIR)/$@
+	mkdir -p $(EXPDIR)/$@/S
+	printf "\033[0;34m  START OF EXPERIMENT\033[0m exp: %s, timestamp: %s\n\n" $@ `date +%Y-%m-%d-%H:%M:%S` | tee $(EXPDIR)/$@/make.log
+	sleep 10
+	make sh NODE=J ADBSHELLCMD='su -c "nexutil -s640 -i -v$(CHANSPEC)"' | tee -a $(EXPDIR)/$@/make.log
+	make sh NODE=J ADBSHELLCMD='su -c "nexutil -s641 -i -v50"' | tee -a $(EXPDIR)/$@/make.log
+	make sh NODE=S ADBSHELLCMD='su -c "nexutil -s610 -i -v$(CHANSPEC)"' | tee -a $(EXPDIR)/$@/make.log
+	make sh NODE=S ADBSHELLCMD='su -c "export LD_PRELOAD=libfakeioctl.so && nohup tcpdump -i wlan0 -w /sdcard/capture.pcap > /sdcard/tcpdump.log 2>/sdcard/tcpdump.err &"' | tee -a $(EXPDIR)/$@/make.log
+	make sh NODE=W ADBSHELLCMD='su -c "nexutil -s621 -i -v$(CHANSPEC)"' | tee -a $(EXPDIR)/$@/make.log
+	printf "\n\033[0;31m  START WAITING\033[0m for 1350 seconds, timestamp: %s\n" `date +%Y-%m-%d-%H:%M:%S` | tee -a $(EXPDIR)/$@/make.log
+	sleep 1350 ##### WARNING
+	printf "\n\033[0;31m  END WAITING\033[0m timestamp: %s\n" `date +%Y-%m-%d-%H:%M:%S` | tee -a $(EXPDIR)/$@/make.log
+	make sh NODE=S ADBSHELLCMD='su -c "killall tcpdump | true"' | tee -a $(EXPDIR)/$@/make.log
+	make pull NODE=S ADBPULLSRC=/sdcard/capture.pcap ADBPULLDST=$(EXPDIR)/$@/S/capture.pcap | tee -a $(EXPDIR)/$@/make.log
+	make pull NODE=S ADBPULLSRC=/sdcard/tcpdump.log ADBPULLDST=$(EXPDIR)/$@/S/tcpdump.log | tee -a $(EXPDIR)/$@/make.log
+	make pull NODE=S ADBPULLSRC=/sdcard/tcpdump.err ADBPULLDST=$(EXPDIR)/$@/S/tcpdump.err | tee -a $(EXPDIR)/$@/make.log
+	printf "\n\033[0;34m  END OF EXPERIMENT\033[0m exp: %s, timestamp: %s\n" $@ `date +%Y-%m-%d-%H:%M:%S` | tee -a $(EXPDIR)/$@/make.log
+#	git add $(EXPDIR)/$@
+#	git commit -m "EXPERIMENT: added results for $@."
+
+experiment4.002:
+	make clean
+	make install-firmware NODE=S
+	make install-firmware NODE=W
+	make install-firmware NODE=R
+	make clean
+	make install-firmware NODE=J UCODEFILE=ucode-jammer.asm
+	rm -rf $(EXPDIR)/$@
+	mkdir -p $(EXPDIR)/$@
+	mkdir -p $(EXPDIR)/$@/S
+	printf "\033[0;34m  START OF EXPERIMENT\033[0m exp: %s, timestamp: %s\n\n" $@ `date +%Y-%m-%d-%H:%M:%S` | tee $(EXPDIR)/$@/make.log
+	sleep 10
+	make sh NODE=J ADBSHELLCMD='su -c "nexutil -s640 -i -v$(CHANSPEC)"' | tee -a $(EXPDIR)/$@/make.log
+	make sh NODE=J ADBSHELLCMD='su -c "nexutil -s641 -i -v60"' | tee -a $(EXPDIR)/$@/make.log
+	make sh NODE=S ADBSHELLCMD='su -c "nexutil -s610 -i -v$(CHANSPEC)"' | tee -a $(EXPDIR)/$@/make.log
+	make sh NODE=S ADBSHELLCMD='su -c "export LD_PRELOAD=libfakeioctl.so && nohup tcpdump -i wlan0 -w /sdcard/capture.pcap > /sdcard/tcpdump.log 2>/sdcard/tcpdump.err &"' | tee -a $(EXPDIR)/$@/make.log
+	make sh NODE=W ADBSHELLCMD='su -c "nexutil -s621 -i -v$(CHANSPEC)"' | tee -a $(EXPDIR)/$@/make.log
+	printf "\n\033[0;31m  START WAITING\033[0m for 1350 seconds, timestamp: %s\n" `date +%Y-%m-%d-%H:%M:%S` | tee -a $(EXPDIR)/$@/make.log
+	sleep 1350 ##### WARNING
+	printf "\n\033[0;31m  END WAITING\033[0m timestamp: %s\n" `date +%Y-%m-%d-%H:%M:%S` | tee -a $(EXPDIR)/$@/make.log
+	make sh NODE=S ADBSHELLCMD='su -c "killall tcpdump | true"' | tee -a $(EXPDIR)/$@/make.log
+	make pull NODE=S ADBPULLSRC=/sdcard/capture.pcap ADBPULLDST=$(EXPDIR)/$@/S/capture.pcap | tee -a $(EXPDIR)/$@/make.log
+	make pull NODE=S ADBPULLSRC=/sdcard/tcpdump.log ADBPULLDST=$(EXPDIR)/$@/S/tcpdump.log | tee -a $(EXPDIR)/$@/make.log
+	make pull NODE=S ADBPULLSRC=/sdcard/tcpdump.err ADBPULLDST=$(EXPDIR)/$@/S/tcpdump.err | tee -a $(EXPDIR)/$@/make.log
+	printf "\n\033[0;34m  END OF EXPERIMENT\033[0m exp: %s, timestamp: %s\n" $@ `date +%Y-%m-%d-%H:%M:%S` | tee -a $(EXPDIR)/$@/make.log
+
+experiment4.003:
+	make clean
+	make install-firmware NODE=S
+	make install-firmware NODE=W
+	make install-firmware NODE=R
+	make clean
+	make install-firmware NODE=J UCODEFILE=ucode-jammer.asm
+	rm -rf $(EXPDIR)/$@
+	mkdir -p $(EXPDIR)/$@
+	mkdir -p $(EXPDIR)/$@/S
+	printf "\033[0;34m  START OF EXPERIMENT\033[0m exp: %s, timestamp: %s\n\n" $@ `date +%Y-%m-%d-%H:%M:%S` | tee $(EXPDIR)/$@/make.log
+	sleep 10
+	make sh NODE=J ADBSHELLCMD='su -c "nexutil -s640 -i -v$(CHANSPEC)"' | tee -a $(EXPDIR)/$@/make.log
+	make sh NODE=J ADBSHELLCMD='su -c "nexutil -s641 -i -v70"' | tee -a $(EXPDIR)/$@/make.log
+	make sh NODE=S ADBSHELLCMD='su -c "nexutil -s610 -i -v$(CHANSPEC)"' | tee -a $(EXPDIR)/$@/make.log
+	make sh NODE=S ADBSHELLCMD='su -c "export LD_PRELOAD=libfakeioctl.so && nohup tcpdump -i wlan0 -w /sdcard/capture.pcap > /sdcard/tcpdump.log 2>/sdcard/tcpdump.err &"' | tee -a $(EXPDIR)/$@/make.log
+	make sh NODE=W ADBSHELLCMD='su -c "nexutil -s621 -i -v$(CHANSPEC)"' | tee -a $(EXPDIR)/$@/make.log
+	printf "\n\033[0;31m  START WAITING\033[0m for 1350 seconds, timestamp: %s\n" `date +%Y-%m-%d-%H:%M:%S` | tee -a $(EXPDIR)/$@/make.log
+	sleep 1350 ##### WARNING
+	printf "\n\033[0;31m  END WAITING\033[0m timestamp: %s\n" `date +%Y-%m-%d-%H:%M:%S` | tee -a $(EXPDIR)/$@/make.log
+	make sh NODE=S ADBSHELLCMD='su -c "killall tcpdump | true"' | tee -a $(EXPDIR)/$@/make.log
+	make pull NODE=S ADBPULLSRC=/sdcard/capture.pcap ADBPULLDST=$(EXPDIR)/$@/S/capture.pcap | tee -a $(EXPDIR)/$@/make.log
+	make pull NODE=S ADBPULLSRC=/sdcard/tcpdump.log ADBPULLDST=$(EXPDIR)/$@/S/tcpdump.log | tee -a $(EXPDIR)/$@/make.log
+	make pull NODE=S ADBPULLSRC=/sdcard/tcpdump.err ADBPULLDST=$(EXPDIR)/$@/S/tcpdump.err | tee -a $(EXPDIR)/$@/make.log
+	printf "\n\033[0;34m  END OF EXPERIMENT\033[0m exp: %s, timestamp: %s\n" $@ `date +%Y-%m-%d-%H:%M:%S` | tee -a $(EXPDIR)/$@/make.log
+
+experiment4.004:
+	make clean
+	make install-firmware NODE=S
+	make install-firmware NODE=W
+	make install-firmware NODE=R
+	make clean
+	make install-firmware NODE=J UCODEFILE=ucode-jammer.asm
+	rm -rf $(EXPDIR)/$@
+	mkdir -p $(EXPDIR)/$@
+	mkdir -p $(EXPDIR)/$@/S
+	printf "\033[0;34m  START OF EXPERIMENT\033[0m exp: %s, timestamp: %s\n\n" $@ `date +%Y-%m-%d-%H:%M:%S` | tee $(EXPDIR)/$@/make.log
+	sleep 10
+	make sh NODE=J ADBSHELLCMD='su -c "nexutil -s640 -i -v$(CHANSPEC)"' | tee -a $(EXPDIR)/$@/make.log
+	make sh NODE=J ADBSHELLCMD='su -c "nexutil -s641 -i -v80"' | tee -a $(EXPDIR)/$@/make.log
+	make sh NODE=S ADBSHELLCMD='su -c "nexutil -s610 -i -v$(CHANSPEC)"' | tee -a $(EXPDIR)/$@/make.log
+	make sh NODE=S ADBSHELLCMD='su -c "export LD_PRELOAD=libfakeioctl.so && nohup tcpdump -i wlan0 -w /sdcard/capture.pcap > /sdcard/tcpdump.log 2>/sdcard/tcpdump.err &"' | tee -a $(EXPDIR)/$@/make.log
+	make sh NODE=W ADBSHELLCMD='su -c "nexutil -s621 -i -v$(CHANSPEC)"' | tee -a $(EXPDIR)/$@/make.log
+	printf "\n\033[0;31m  START WAITING\033[0m for 1350 seconds, timestamp: %s\n" `date +%Y-%m-%d-%H:%M:%S` | tee -a $(EXPDIR)/$@/make.log
+	sleep 1350 ##### WARNING
+	printf "\n\033[0;31m  END WAITING\033[0m timestamp: %s\n" `date +%Y-%m-%d-%H:%M:%S` | tee -a $(EXPDIR)/$@/make.log
+	make sh NODE=S ADBSHELLCMD='su -c "killall tcpdump | true"' | tee -a $(EXPDIR)/$@/make.log
+	make pull NODE=S ADBPULLSRC=/sdcard/capture.pcap ADBPULLDST=$(EXPDIR)/$@/S/capture.pcap | tee -a $(EXPDIR)/$@/make.log
+	make pull NODE=S ADBPULLSRC=/sdcard/tcpdump.log ADBPULLDST=$(EXPDIR)/$@/S/tcpdump.log | tee -a $(EXPDIR)/$@/make.log
+	make pull NODE=S ADBPULLSRC=/sdcard/tcpdump.err ADBPULLDST=$(EXPDIR)/$@/S/tcpdump.err | tee -a $(EXPDIR)/$@/make.log
+	printf "\n\033[0;34m  END OF EXPERIMENT\033[0m exp: %s, timestamp: %s\n" $@ `date +%Y-%m-%d-%H:%M:%S` | tee -a $(EXPDIR)/$@/make.log
+
+experiment4.005:
+	make clean
+	make install-firmware NODE=S
+	make install-firmware NODE=W
+	make install-firmware NODE=R
+	make clean
+	make install-firmware NODE=J UCODEFILE=ucode-jammer.asm
+	rm -rf $(EXPDIR)/$@
+	mkdir -p $(EXPDIR)/$@
+	mkdir -p $(EXPDIR)/$@/S
+	printf "\033[0;34m  START OF EXPERIMENT\033[0m exp: %s, timestamp: %s\n\n" $@ `date +%Y-%m-%d-%H:%M:%S` | tee $(EXPDIR)/$@/make.log
+	sleep 10
+	make sh NODE=J ADBSHELLCMD='su -c "nexutil -s640 -i -v$(CHANSPEC)"' | tee -a $(EXPDIR)/$@/make.log
+	make sh NODE=J ADBSHELLCMD='su -c "nexutil -s641 -i -v90"' | tee -a $(EXPDIR)/$@/make.log
+	make sh NODE=S ADBSHELLCMD='su -c "nexutil -s610 -i -v$(CHANSPEC)"' | tee -a $(EXPDIR)/$@/make.log
+	make sh NODE=S ADBSHELLCMD='su -c "export LD_PRELOAD=libfakeioctl.so && nohup tcpdump -i wlan0 -w /sdcard/capture.pcap > /sdcard/tcpdump.log 2>/sdcard/tcpdump.err &"' | tee -a $(EXPDIR)/$@/make.log
+	make sh NODE=W ADBSHELLCMD='su -c "nexutil -s621 -i -v$(CHANSPEC)"' | tee -a $(EXPDIR)/$@/make.log
+	printf "\n\033[0;31m  START WAITING\033[0m for 1350 seconds, timestamp: %s\n" `date +%Y-%m-%d-%H:%M:%S` | tee -a $(EXPDIR)/$@/make.log
+	sleep 1350 ##### WARNING
+	printf "\n\033[0;31m  END WAITING\033[0m timestamp: %s\n" `date +%Y-%m-%d-%H:%M:%S` | tee -a $(EXPDIR)/$@/make.log
+	make sh NODE=S ADBSHELLCMD='su -c "killall tcpdump | true"' | tee -a $(EXPDIR)/$@/make.log
+	make pull NODE=S ADBPULLSRC=/sdcard/capture.pcap ADBPULLDST=$(EXPDIR)/$@/S/capture.pcap | tee -a $(EXPDIR)/$@/make.log
+	make pull NODE=S ADBPULLSRC=/sdcard/tcpdump.log ADBPULLDST=$(EXPDIR)/$@/S/tcpdump.log | tee -a $(EXPDIR)/$@/make.log
+	make pull NODE=S ADBPULLSRC=/sdcard/tcpdump.err ADBPULLDST=$(EXPDIR)/$@/S/tcpdump.err | tee -a $(EXPDIR)/$@/make.log
+	printf "\n\033[0;34m  END OF EXPERIMENT\033[0m exp: %s, timestamp: %s\n" $@ `date +%Y-%m-%d-%H:%M:%S` | tee -a $(EXPDIR)/$@/make.log
+
+experiment4.006:
+	make clean
+	make install-firmware NODE=S
+	make install-firmware NODE=W
+	make install-firmware NODE=R
+	make clean
+	make install-firmware NODE=J UCODEFILE=ucode-jammer.asm
+	rm -rf $(EXPDIR)/$@
+	mkdir -p $(EXPDIR)/$@
+	mkdir -p $(EXPDIR)/$@/S
+	printf "\033[0;34m  START OF EXPERIMENT\033[0m exp: %s, timestamp: %s\n\n" $@ `date +%Y-%m-%d-%H:%M:%S` | tee $(EXPDIR)/$@/make.log
+	sleep 10
+	make sh NODE=J ADBSHELLCMD='su -c "nexutil -s640 -i -v$(CHANSPEC)"' | tee -a $(EXPDIR)/$@/make.log
+	make sh NODE=J ADBSHELLCMD='su -c "nexutil -s641 -i -v100"' | tee -a $(EXPDIR)/$@/make.log
+	make sh NODE=S ADBSHELLCMD='su -c "nexutil -s610 -i -v$(CHANSPEC)"' | tee -a $(EXPDIR)/$@/make.log
+	make sh NODE=S ADBSHELLCMD='su -c "export LD_PRELOAD=libfakeioctl.so && nohup tcpdump -i wlan0 -w /sdcard/capture.pcap > /sdcard/tcpdump.log 2>/sdcard/tcpdump.err &"' | tee -a $(EXPDIR)/$@/make.log
+	make sh NODE=W ADBSHELLCMD='su -c "nexutil -s621 -i -v$(CHANSPEC)"' | tee -a $(EXPDIR)/$@/make.log
+	printf "\n\033[0;31m  START WAITING\033[0m for 1350 seconds, timestamp: %s\n" `date +%Y-%m-%d-%H:%M:%S` | tee -a $(EXPDIR)/$@/make.log
+	sleep 1350 ##### WARNING
+	printf "\n\033[0;31m  END WAITING\033[0m timestamp: %s\n" `date +%Y-%m-%d-%H:%M:%S` | tee -a $(EXPDIR)/$@/make.log
+	make sh NODE=S ADBSHELLCMD='su -c "killall tcpdump | true"' | tee -a $(EXPDIR)/$@/make.log
+	make pull NODE=S ADBPULLSRC=/sdcard/capture.pcap ADBPULLDST=$(EXPDIR)/$@/S/capture.pcap | tee -a $(EXPDIR)/$@/make.log
+	make pull NODE=S ADBPULLSRC=/sdcard/tcpdump.log ADBPULLDST=$(EXPDIR)/$@/S/tcpdump.log | tee -a $(EXPDIR)/$@/make.log
+	make pull NODE=S ADBPULLSRC=/sdcard/tcpdump.err ADBPULLDST=$(EXPDIR)/$@/S/tcpdump.err | tee -a $(EXPDIR)/$@/make.log
+	printf "\n\033[0;34m  END OF EXPERIMENT\033[0m exp: %s, timestamp: %s\n" $@ `date +%Y-%m-%d-%H:%M:%S` | tee -a $(EXPDIR)/$@/make.log
+
+experiment4.007:
+	make clean
+	make install-firmware NODE=S
+	make install-firmware NODE=W
+	make install-firmware NODE=R
+	make clean
+	make install-firmware NODE=J UCODEFILE=ucode-jammer.asm
+	rm -rf $(EXPDIR)/$@
+	mkdir -p $(EXPDIR)/$@
+	mkdir -p $(EXPDIR)/$@/S
+	printf "\033[0;34m  START OF EXPERIMENT\033[0m exp: %s, timestamp: %s\n\n" $@ `date +%Y-%m-%d-%H:%M:%S` | tee $(EXPDIR)/$@/make.log
+	sleep 10
+	make sh NODE=J ADBSHELLCMD='su -c "nexutil -s640 -i -v$(CHANSPEC)"' | tee -a $(EXPDIR)/$@/make.log
+	make sh NODE=J ADBSHELLCMD='su -c "nexutil -s641 -i -v110"' | tee -a $(EXPDIR)/$@/make.log
+	make sh NODE=S ADBSHELLCMD='su -c "nexutil -s610 -i -v$(CHANSPEC)"' | tee -a $(EXPDIR)/$@/make.log
+	make sh NODE=S ADBSHELLCMD='su -c "export LD_PRELOAD=libfakeioctl.so && nohup tcpdump -i wlan0 -w /sdcard/capture.pcap > /sdcard/tcpdump.log 2>/sdcard/tcpdump.err &"' | tee -a $(EXPDIR)/$@/make.log
+	make sh NODE=W ADBSHELLCMD='su -c "nexutil -s621 -i -v$(CHANSPEC)"' | tee -a $(EXPDIR)/$@/make.log
+	printf "\n\033[0;31m  START WAITING\033[0m for 1350 seconds, timestamp: %s\n" `date +%Y-%m-%d-%H:%M:%S` | tee -a $(EXPDIR)/$@/make.log
+	sleep 1350 ##### WARNING
+	printf "\n\033[0;31m  END WAITING\033[0m timestamp: %s\n" `date +%Y-%m-%d-%H:%M:%S` | tee -a $(EXPDIR)/$@/make.log
+	make sh NODE=S ADBSHELLCMD='su -c "killall tcpdump | true"' | tee -a $(EXPDIR)/$@/make.log
+	make pull NODE=S ADBPULLSRC=/sdcard/capture.pcap ADBPULLDST=$(EXPDIR)/$@/S/capture.pcap | tee -a $(EXPDIR)/$@/make.log
+	make pull NODE=S ADBPULLSRC=/sdcard/tcpdump.log ADBPULLDST=$(EXPDIR)/$@/S/tcpdump.log | tee -a $(EXPDIR)/$@/make.log
+	make pull NODE=S ADBPULLSRC=/sdcard/tcpdump.err ADBPULLDST=$(EXPDIR)/$@/S/tcpdump.err | tee -a $(EXPDIR)/$@/make.log
+	printf "\n\033[0;34m  END OF EXPERIMENT\033[0m exp: %s, timestamp: %s\n" $@ `date +%Y-%m-%d-%H:%M:%S` | tee -a $(EXPDIR)/$@/make.log
+
+experiment4.008:
+	make clean
+	make install-firmware NODE=S
+	make install-firmware NODE=W
+	make install-firmware NODE=R
+	make clean
+	make install-firmware NODE=J UCODEFILE=ucode-jammer.asm
+	rm -rf $(EXPDIR)/$@
+	mkdir -p $(EXPDIR)/$@
+	mkdir -p $(EXPDIR)/$@/S
+	printf "\033[0;34m  START OF EXPERIMENT\033[0m exp: %s, timestamp: %s\n\n" $@ `date +%Y-%m-%d-%H:%M:%S` | tee $(EXPDIR)/$@/make.log
+	sleep 10
+	make sh NODE=J ADBSHELLCMD='su -c "nexutil -s640 -i -v$(CHANSPEC)"' | tee -a $(EXPDIR)/$@/make.log
+	make sh NODE=J ADBSHELLCMD='su -c "nexutil -s641 -i -v120"' | tee -a $(EXPDIR)/$@/make.log
+	make sh NODE=S ADBSHELLCMD='su -c "nexutil -s610 -i -v$(CHANSPEC)"' | tee -a $(EXPDIR)/$@/make.log
+	make sh NODE=S ADBSHELLCMD='su -c "export LD_PRELOAD=libfakeioctl.so && nohup tcpdump -i wlan0 -w /sdcard/capture.pcap > /sdcard/tcpdump.log 2>/sdcard/tcpdump.err &"' | tee -a $(EXPDIR)/$@/make.log
+	make sh NODE=W ADBSHELLCMD='su -c "nexutil -s621 -i -v$(CHANSPEC)"' | tee -a $(EXPDIR)/$@/make.log
+	printf "\n\033[0;31m  START WAITING\033[0m for 1350 seconds, timestamp: %s\n" `date +%Y-%m-%d-%H:%M:%S` | tee -a $(EXPDIR)/$@/make.log
+	sleep 1350 ##### WARNING
+	printf "\n\033[0;31m  END WAITING\033[0m timestamp: %s\n" `date +%Y-%m-%d-%H:%M:%S` | tee -a $(EXPDIR)/$@/make.log
+	make sh NODE=S ADBSHELLCMD='su -c "killall tcpdump | true"' | tee -a $(EXPDIR)/$@/make.log
+	make pull NODE=S ADBPULLSRC=/sdcard/capture.pcap ADBPULLDST=$(EXPDIR)/$@/S/capture.pcap | tee -a $(EXPDIR)/$@/make.log
+	make pull NODE=S ADBPULLSRC=/sdcard/tcpdump.log ADBPULLDST=$(EXPDIR)/$@/S/tcpdump.log | tee -a $(EXPDIR)/$@/make.log
+	make pull NODE=S ADBPULLSRC=/sdcard/tcpdump.err ADBPULLDST=$(EXPDIR)/$@/S/tcpdump.err | tee -a $(EXPDIR)/$@/make.log
+	printf "\n\033[0;34m  END OF EXPERIMENT\033[0m exp: %s, timestamp: %s\n" $@ `date +%Y-%m-%d-%H:%M:%S` | tee -a $(EXPDIR)/$@/make.log
+
+FORCE:
