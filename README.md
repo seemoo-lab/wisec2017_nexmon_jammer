@@ -2,7 +2,7 @@
 
 # WiSec 2017 Nexmon Jammer
 
-On the 10th ACM Conference on Security and Privacy in Wireless and Mobile Networks (WiSec 2017) 
+At the 10th ACM Conference on Security and Privacy in Wireless and Mobile Networks (WiSec 2017) 
 we publish a paper on "Massive Reactive Smartphone-Based Jamming using Arbitrary Waveforms and 
 Adaptive Power Control". This repository contains source code required to repeat the
 experiments we did for our paper. Additionally, it allows fellow researches to base their own
